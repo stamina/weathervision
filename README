@@ -1,2 +1,3 @@
 Weathervision is a simple weather forecast script for Conky written by Bas Brugman in Ruby.
 Weather data is extracted from http://www.wunderground.com/ for personal use only.
+
