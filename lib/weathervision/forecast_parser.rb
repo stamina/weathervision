@@ -60,4 +60,16 @@ class ForecastParser
     }
   end
 
+  def extract_wind_speed(text)
+    if text.match(/(\d+)\s+(KPH|MPH)/i)
+      speed, unit = $1, $2
+      speed = speed.to_i * 1.605 if unit =~ /MPH/i
+    end
+    speed.to_i
+  end
+
+  def extract_wind_direction(text)
+    ""
+  end
+
 end
