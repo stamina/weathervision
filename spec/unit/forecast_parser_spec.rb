@@ -5,15 +5,17 @@ module Weathervision
     let(:test_options_image) { { "fc_query" => "Utrecht", "c_query" => "IUTRECHT23", "mode" => "image" } }
     let(:test_options_text) { { "fc_query" => "Utrecht", "c_query" => "IUTRECHT23", "mode" => "text" } }
 
-    it "should call the right image method according the options hash" do
+    it "should call the right image methods according the options hash" do
       parser = ForecastParser.new(test_options_image)
       parser.should_receive(:calc_weather_icon).with(:image).once
+      parser.should_receive(:calc_wind_icon).once
       parser.parse
     end
 
     it "should call the right text method according the options hash" do
       parser = ForecastParser.new(test_options_text)
       parser.should_receive(:calc_weather_icon).with(:text).once
+      parser.should_not_receive(:calc_wind_icon)
       parser.parse
     end
 
