@@ -4,6 +4,8 @@ module Weathervision
 
     def initialize(options)
       @forecast, @current, @params = {}, {}, {}
+      @image_tpl = 'templates/weathervision_image.erb'
+      @text_tpl = 'templates/weathervision_text.erb'
       @wind_icons = {
         "VAR" => { empty: "00", green: "01", yellow: "02", orange: "03", red: "04" },
         "North" => { empty: "00", green: "05", yellow: "21", orange: "37", red: "53" },
@@ -92,22 +94,20 @@ module Weathervision
     def show_image_version
       calc_weather_icon(:image)
       calc_wind_icon
-      p @forecast
-      p @current
-      
+      erb = ERB.new(File.read(@image_tpl))
+      p erb.result(binding)
     end
 
     def show_text_version
       calc_weather_icon(:text)
-      p @forecast
-      p @current
-
+      erb = ERB.new(File.read(@text_tpl))
+      p erb.result(binding)
     end
 
     def calc_weather_icon(type)
       @forecast.keys.each do |period|
         if type == :image
-          @forecast[period].merge!("weather_icon" => @image_icons[@forecast[period]["conditions"]])
+          @forecast[period].merge!("weather_icon" => @image_icons[@forecast[period]["conditions"]] + ".png")
         elsif type == :text
           @forecast[period].merge!("weather_icon" => @text_icons[@forecast[period]["conditions"]])
         end
@@ -116,16 +116,24 @@ module Weathervision
 
     def calc_wind_icon
       @forecast.keys.each do |period|
-        color = case @forecast[period]["windspeed"].to_i
-          when 0 then :empty 
-          when 1..19 then :green 
-          when 20..25 then :yellow 
-          when 26..39 then :orange
-          when 40..256 then :red 
-        else
-         :empty 
+        if @forecast[period].keys.include?("windspeed")
+          color = get_color @forecast[period]["windspeed"]
+          @forecast[period].merge!("wind_icon" => @wind_icons[@forecast[period]["winddir"]][color] + ".png")
         end
-        @forecast[period].merge!("wind_icon" => @wind_icons[@forecast[period]["winddir"]][color]) if @forecast[period].keys.include?("windspeed")
+      end
+      color = get_color @current["windspeed"]
+      @current.merge!("wind_icon" => @wind_icons[@current["winddir"]][color] + ".png")
+    end
+
+    def get_color windspeed
+      color = case windspeed.to_i
+        when 0 then :empty 
+        when 1..19 then :green 
+        when 20..25 then :yellow 
+        when 26..39 then :orange
+        when 40..256 then :red 
+      else
+       :empty 
       end
     end
 

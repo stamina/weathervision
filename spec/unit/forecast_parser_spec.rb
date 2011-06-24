@@ -3,7 +3,7 @@ require 'spec_helper'
 module Weathervision
   describe ForecastParser do
     let(:test_options_image) { { "fc_query" => "Utrecht", "c_query" => "IUTRECHT23", "mode" => "image" } }
-    let(:test_options_text) { { "fc_query" => "Utrecht", "c_query" => "IUTRECHT23", "mode" => "text" } }
+    let(:test_options_text) { { "fc_query" => "Utrecht", "c_query" => "IUTRECHT37", "mode" => "text" } }
 
     it "should call the right image methods according the options hash" do
       parser = ForecastParser.new(test_options_image)

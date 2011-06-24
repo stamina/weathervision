@@ -1,6 +1,7 @@
 require "nokogiri"
 require "open-uri"
 require "thor"
+require "erb"
 
 require "pry"
 
