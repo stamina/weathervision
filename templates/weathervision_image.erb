@@ -1,3 +1,6 @@
-
-<%= @forecast %>
-<%= @current["wind_icon"] %>
+<% x_pos_wth, x_pos_wind = 20, 50 %>
+<% @forecast.each do |period, forecast| %>
+${image <%= forecast["weather_icon"] %> -s 60x60 -p <%= x_pos_wth %>,100  }<% if forecast.include? "wind_icon" %>${image <%= forecast["wind_icon"] %> -s 30x30 -p <%= x_pos_wind %>,100  }<% end %>
+<% x_pos_wth += 60 %>
+<% x_pos_wind += 60 %>
+<% end %>

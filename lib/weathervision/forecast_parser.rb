@@ -4,8 +4,8 @@ module Weathervision
 
     def initialize(options)
       @forecast, @current, @params = {}, {}, {}
-      @image_tpl = 'templates/weathervision_image.erb'
-      @text_tpl = 'templates/weathervision_text.erb'
+      @image_tpl = File.expand_path("../../templates/weathervision_image.erb", File.dirname(__FILE__))
+      @text_tpl = File.expand_path("../../templates/weathervision_text.erb", File.dirname(__FILE__))
       @wind_icons = {
         "VAR" => { empty: "00", green: "01", yellow: "02", orange: "03", red: "04" },
         "North" => { empty: "00", green: "05", yellow: "21", orange: "37", red: "53" },
@@ -94,8 +94,8 @@ module Weathervision
     def show_image_version
       calc_weather_icon(:image)
       calc_wind_icon
-      erb = ERB.new(File.read(@image_tpl))
-      p erb.result(binding)
+      erb = ERB.new(File.read(@image_tpl), 0, '>')
+      puts erb.result(binding)
     end
 
     def show_text_version
@@ -105,9 +105,10 @@ module Weathervision
     end
 
     def calc_weather_icon(type)
+      wth_icon = File.expand_path("../../assets/images/weathericons", File.dirname(__FILE__))
       @forecast.keys.each do |period|
         if type == :image
-          @forecast[period].merge!("weather_icon" => @image_icons[@forecast[period]["conditions"]] + ".png")
+          @forecast[period].merge!("weather_icon" => wth_icon + "/" + @image_icons[@forecast[period]["conditions"]] + ".png")
         elsif type == :text
           @forecast[period].merge!("weather_icon" => @text_icons[@forecast[period]["conditions"]])
         end
@@ -115,14 +116,15 @@ module Weathervision
     end
 
     def calc_wind_icon
+      wind_icon = File.expand_path("../../assets/images/bearingicons", File.dirname(__FILE__))
       @forecast.keys.each do |period|
         if @forecast[period].keys.include?("windspeed")
           color = get_color @forecast[period]["windspeed"]
-          @forecast[period].merge!("wind_icon" => @wind_icons[@forecast[period]["winddir"]][color] + ".png")
+          @forecast[period].merge!("wind_icon" => wind_icon + "/" + @wind_icons[@forecast[period]["winddir"]][color] + ".png")
         end
       end
       color = get_color @current["windspeed"]
-      @current.merge!("wind_icon" => @wind_icons[@current["winddir"]][color] + ".png")
+      @current.merge!("wind_icon" => wind_icon + "/" + @wind_icons[@current["winddir"]][color] + ".png")
     end
 
     def get_color windspeed
@@ -155,6 +157,9 @@ module Weathervision
           @forecast[period].merge!({ "text" => forecast_text.text}) 
           @forecast[period].merge!({ "windspeed" => extract_wind_speed(forecast_text.text)})
           @forecast[period].merge!({ "winddir" => extract_wind_direction(forecast_text.text)})
+        else
+          # remove forecast period which doesnt have wind info
+          @forecast.delete(period)
         end
       end
     end
