@@ -7,7 +7,8 @@ module Weathervision
 
     it "should have a template which outputs paths to images" do
       parser = ForecastParser.new(test_options_image)
-      parser.parse.should include(".png")
+      parser.parse
+      parser.conky_ouput.should include(".png")
     end
 
     it "should call the right image methods according the options hash" do

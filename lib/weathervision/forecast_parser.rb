@@ -1,6 +1,6 @@
 module Weathervision
   class ForecastParser
-    attr_reader :text_icons, :image_icons, :forecast, :current
+    attr_reader :text_icons, :image_icons, :forecast, :current, :conky_ouput
 
     def initialize(options)
       @forecast, @current, @params = {}, {}, {}
@@ -95,13 +95,15 @@ module Weathervision
       calc_weather_icon(:image)
       calc_wind_icon
       erb = ERB.new(File.read(@image_tpl), 0, '>')
-      puts erb.result(binding)
+      @conky_ouput = erb.result(binding)
+      puts @conky_ouput
     end
 
     def show_text_version
       calc_weather_icon(:text)
       erb = ERB.new(File.read(@text_tpl))
-      p erb.result(binding)
+      @conky_ouput = erb.result(binding)
+      puts @conky_ouput
     end
 
     def calc_weather_icon(type)
@@ -170,7 +172,7 @@ module Weathervision
       @current['city'] = node.css('city').text
       @current['temp'] = node.css('temp_c').text
       @current['updated'] = node.css("observation_time_rfc822").text
-      @current['windspeed'] = (node.css('wind_mph').text.to_i * 1.605).to_s
+      @current['windspeed'] = ("%.1f" % (node.css('wind_mph').text.to_i * 1.605)).to_s
       @current['winddir'] = node.css('wind_dir').text
       @current['winddegrees'] = node.css('wind_degrees').text
       @current['humidity'] = node.css('relative_humidity').text
