@@ -1,19 +1,11 @@
 <% x_pos_wth, x_pos_wind = 20, 50 %>
 <% @forecast.each do |period, forecast| %>
 ${image <%= forecast["weather_icon"] %> -s 60x60 -p <%= x_pos_wth %>,110  }<% if forecast.include? "wind_icon" %>${image <%= forecast["wind_icon"] %> -s 30x30 -p <%= x_pos_wind %>,110  }<% end %>
-<% x_pos_wth += 60 %>
-<% x_pos_wind += 60 %>
+<% x_pos_wth += 65 %>
+<% x_pos_wind += 65 %>
 <% end %>
-
-<% x_pos_text = 50 %>
-${voffset 50}<% @forecast.each do |period, forecast| %>${goto <%= x_pos_text %>}<%= forecast["weekday"][0..2] %><% x_pos_text += 60 %><% end %>
-
-<% x_pos_text = 50 %>
-celsius<% @forecast.each do |period, forecast| %>${goto <%= x_pos_text %>}<%= forecast["high"] + ' / ' + forecast["low"] %><% x_pos_text += 60 %><% end %>
-
-${image <%= @current["wind_icon"] %> -s 80x80 -p 130,220  }
-${font Futura Md BT:size=12}Now in${font}
-${font Futura Md BT:size=16} <%= @current["city"] %>${alignr}<%= @current["temp"] %>${iconv_start UTF-8 ISO_8859-1}°${iconv_stop}${font}
-${alignr}<%= @current["humidity"] %>% humidity
-${alignr}<%= @current["windspeed"] %> km/h <%=  @current["winddir"]%> wind
-${alignr}<%= @current["sunset"] %> sunset
+<% x_pos_text = 47 %>
+${voffset 45}<% @forecast.each do |period, forecast| %>${goto <%= x_pos_text %>}<%= forecast["weekday"][0..2] %><% x_pos_text += 65 %><% end %>
+<% x_pos_text = 47 %>
+${voffset 15}<% @forecast.each do |period, forecast| %>${goto <%= x_pos_text %>}<%= forecast["high"] + '°/' + forecast["low"] + '°'%><% x_pos_text += 65 %><% end %>
+${image <%= @current["wind_icon"] %> -s 60x60 -p 160,225}${voffset 15}${goto 10}${font Futura Md BT:size=12}Now in ${font}${font Futura Md BT:size=18}<%= @current["city"] %>${goto 240}<%= @current["temp"] + '°'%>${font}${voffset 15}${goto 240}<%= @current["humidity"] %>% humidity${voffset 15}${goto 240}<%= @current["windspeed"] %> km/h <%=  @current["winddir"]%> wind${voffset 15}${goto 240}<%= @current["sunset"] %> sunset
