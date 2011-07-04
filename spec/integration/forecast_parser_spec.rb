@@ -2,6 +2,8 @@ require 'spec_helper'
 
 module Weathervision
   describe ForecastParser do
+    let(:test_options_image) { { "fc_query" => "Utrecht", "c_query" => "IUTRECHT23", "mode" => "image", "radar_url" => "http://www.knmi.nl/neerslagradar/images/meest_recente_radarloop451.gif"} }
+    let(:test_options_text) { { "fc_query" => "Utrecht", "c_query" => "IUTRECHT37", "mode" => "text", "radar_url" => "http://www.knmi.nl/neerslagradar/images/meest_recente_radarloop451.gif"} }
 
     it "should parse a weather forecast feed over the internet" do
       doc = Nokogiri::XML(open("http://api.wunderground.com/auto/wui/geo/ForecastXML/index.xml?query=Utrecht"))
@@ -52,6 +54,18 @@ module Weathervision
       current['winddegrees'] = node.css('wind_degrees').text
       current['humidity'] = node.css('relative_humidity').text
       current.count.should > 0
+    end
+
+    it "should download and manipulate a radar image" do
+      parser = ForecastParser.new(test_options_image)
+      parser.parse
+      File.size?(RADAR_PATH + '/radar.gif').should_not be_nil
+    end
+
+    it "should cleanup temporary images" do
+      parser = ForecastParser.new(test_options_image)
+      parser.parse
+      Dir.glob("#{RADAR_PATH}/*.gif").size.should == 1
     end
 
   end

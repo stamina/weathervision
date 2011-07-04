@@ -1,6 +1,6 @@
 <% x_pos_wth, x_pos_wind = 20, 50 %>
 <% @forecast.each do |period, forecast| %>
-${image <%= forecast["weather_icon"] %> -s 60x60 -p <%= x_pos_wth %>,110  }<% if forecast.include? "wind_icon" %>${image <%= forecast["wind_icon"] %> -s 30x30 -p <%= x_pos_wind %>,110  }<% end %>
+${image <%= forecast["weather_icon"] %> -s 60x60 -p <%= x_pos_wth %>,115  }<% if forecast.include? "wind_icon" %>${image <%= forecast["wind_icon"] %> -s 30x30 -p <%= x_pos_wind %>,110  }<% end %>
 <% x_pos_wth += 65 %>
 <% x_pos_wind += 65 %>
 <% end %>
@@ -8,4 +8,4 @@ ${image <%= forecast["weather_icon"] %> -s 60x60 -p <%= x_pos_wth %>,110  }<% if
 ${voffset 45}<% @forecast.each do |period, forecast| %>${goto <%= x_pos_text %>}<%= forecast["weekday"][0..2] %><% x_pos_text += 65 %><% end %>
 <% x_pos_text = 47 %>
 ${voffset 15}<% @forecast.each do |period, forecast| %>${goto <%= x_pos_text %>}<%= forecast["high"] + '°/' + forecast["low"] + '°'%><% x_pos_text += 65 %><% end %>
-${image <%= @current["wind_icon"] %> -s 60x60 -p 160,225}${voffset 15}${goto 10}${font Futura Md BT:size=12}Now in ${font}${font Futura Md BT:size=18}<%= @current["city"] %>${goto 240}<%= @current["temp"] + '°'%>${font}${voffset 15}${goto 240}<%= @current["humidity"] %>% humidity${voffset 15}${goto 240}<%= @current["windspeed"] %> km/h <%=  @current["winddir"]%> wind${voffset 15}${goto 240}<%= @current["sunset"] %> sunset
+${image <%= @current["wind_icon"] %> -s 40x40 -p 260,215}${voffset 30}${goto 200}${font Futura Md BT:size=12}<%= @current["city"] %>${voffset 20}${goto 200}<%= @current["temp"] + '°'%>${font}${voffset 15}${goto 200}<%= @current["humidity"] %>% humidity${voffset 15}${goto 200}<%= @current["windspeed"] %> km/h <%=  @current["winddir"]%> wind${voffset 15}${goto 200}<%= @current["sunset"] %> sunset<% unless @radar.nil? %>${image <%= @radar %> -s 100x100 -p 80,215}<% end %>

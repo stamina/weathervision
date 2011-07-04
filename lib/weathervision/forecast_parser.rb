@@ -1,11 +1,11 @@
 module Weathervision
   class ForecastParser
-    attr_reader :text_icons, :image_icons, :forecast, :current, :conky_ouput
+    attr_reader :text_icons, :image_icons, :forecast, :current, :conky_ouput, :radar
 
     def initialize(options)
-      @forecast, @current, @params = {}, {}, {}
-      @image_tpl = File.expand_path("../../templates/weathervision_image.erb", File.dirname(__FILE__))
-      @text_tpl = File.expand_path("../../templates/weathervision_text.erb", File.dirname(__FILE__))
+      @forecast, @current, @params, @radar = {}, {}, {}, nil
+      @image_tpl = "#{TEMPLATE_PATH}/weathervision_image.erb"
+      @text_tpl = "#{TEMPLATE_PATH}/weathervision_text.erb"
       @wind_icons = {
         "VAR" => { empty: "00", green: "01", yellow: "02", orange: "03", red: "04" },
         "North" => { empty: "00", green: "05", yellow: "21", orange: "37", red: "53" },
@@ -84,6 +84,7 @@ module Weathervision
       @params["mode"] = options["mode"]
       @params["fc_query"] = options["fc_query"]
       @params["c_query"] = options["c_query"]
+      @params["radar_url"] = options["radar_url"]
     end
 
     def parse
@@ -94,6 +95,7 @@ module Weathervision
     def show_image_version
       calc_weather_icon(:image)
       calc_wind_icon
+      parse_radar unless @params["radar_url"].nil?
       erb = ERB.new(File.read(@image_tpl), 0, '>')
       @conky_ouput = erb.result(binding)
       puts @conky_ouput
@@ -101,16 +103,35 @@ module Weathervision
 
     def show_text_version
       calc_weather_icon(:text)
+      parse_radar unless @params["radar_url"].nil?
       erb = ERB.new(File.read(@text_tpl))
       @conky_ouput = erb.result(binding)
       puts @conky_ouput
     end
 
+    def parse_radar
+      begin
+        outfile = RADAR_PATH + "/radar_#{Time.now.to_i}_#{Time.now.strftime("%d%m%Y")}.gif"
+        %x(wget #{@params["radar_url"]} -O #{outfile})
+        %x(gifsicle --colors=255 #{outfile} > #{RADAR_PATH + '/temp.gif'})
+        %x(gifsicle -U #{RADAR_PATH + '/temp.gif'} "#-1" > #{RADAR_PATH + '/radar.gif'})
+        # clear temp files and set actual radar image
+        Dir.glob("#{RADAR_PATH}/*.gif") do |filename|
+          if filename =~ /radar\.gif/
+            @radar = filename
+          else
+            File.delete(filename)
+          end
+        end
+      rescue Exception => e
+        STDERR.puts e.message
+      end
+    end
+
     def calc_weather_icon(type)
-      wth_icon = File.expand_path("../../assets/images/weathericons", File.dirname(__FILE__))
       @forecast.keys.each do |period|
         if type == :image
-          @forecast[period].merge!("weather_icon" => wth_icon + "/" + @image_icons[@forecast[period]["conditions"]] + ".png")
+          @forecast[period].merge!("weather_icon" => WEATHER_PATH + "/" + @image_icons[@forecast[period]["conditions"]] + ".png")
         elsif type == :text
           @forecast[period].merge!("weather_icon" => @text_icons[@forecast[period]["conditions"]])
         end
@@ -118,15 +139,14 @@ module Weathervision
     end
 
     def calc_wind_icon
-      wind_icon = File.expand_path("../../assets/images/bearingicons", File.dirname(__FILE__))
       @forecast.keys.each do |period|
         if @forecast[period].keys.include?("windspeed")
           color = get_color @forecast[period]["windspeed"]
-          @forecast[period].merge!("wind_icon" => wind_icon + "/" + @wind_icons[@forecast[period]["winddir"]][color] + ".png")
+          @forecast[period].merge!("wind_icon" => BEARING_PATH + "/" + @wind_icons[@forecast[period]["winddir"]][color] + ".png")
         end
       end
       color = get_color @current["windspeed"]
-      @current.merge!("wind_icon" => wind_icon + "/" + @wind_icons[@current["winddir"]][color] + ".png")
+      @current.merge!("wind_icon" => BEARING_PATH + "/" + @wind_icons[@current["winddir"]][color] + ".png")
     end
 
     def get_color windspeed
