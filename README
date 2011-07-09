@@ -1,3 +1,11 @@
-Weathervision is a simple weather forecast script for Conky written by Bas Brugman in Ruby.
-Weather data is extracted from http://www.wunderground.com/ for personal use only.
+Author: Bas Brugman
+
+Company: http://www.visionnaire.nl
+
+Weathervision is a  weather forecast script for Conky written in Ruby.
+The weather data is extracted from http://www.wunderground.com/ for my personal use.
+
+
+TODO........
+text_buffer_size conky.......... 4096 make sure
 

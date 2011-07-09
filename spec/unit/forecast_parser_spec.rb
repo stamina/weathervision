@@ -28,9 +28,9 @@ module Weathervision
 
     it "should extract the wind speed from a text node and return an integer respresenting kph" do
       parser = ForecastParser.new(test_options_image)
-      parser.extract_wind_speed("Clear. High 28&amp;deg;C (82&amp;deg;F). Winds 10 kph SSE").should == 10
-      parser.extract_wind_speed("Clear. High 28&amp;deg;C (82&amp;deg;F). No Winds today, sorry.").should == 0
-      parser.extract_wind_speed("Winds 30 MPH West. Thunderstorms. High18&amp;deg;C").should == 48
+      parser.extract_wind_speed("Clear. High 28&amp;deg;C (82&amp;deg;F). Winds 10 kph SSE").should == "10.0"
+      parser.extract_wind_speed("Clear. High 28&amp;deg;C (82&amp;deg;F). No Winds today, sorry.").should == "0.0"
+      parser.extract_wind_speed("Winds 30 MPH West. Thunderstorms. High18&amp;deg;C").should == "48.1"
     end
 
     it "should extract the wind direction from a text node and return it as a string" do
@@ -50,6 +50,22 @@ module Weathervision
       parser = ForecastParser.new(test_options_image_without_radar)
       parser.should_not_receive(:parse_radar)
       parser.parse
+    end
+
+    it "should return the right color symbols for the wind speed" do
+      parser = ForecastParser.new(test_options_image)
+      parser.get_color("100").should == :red
+      parser.get_color(0.2).should == :empty
+      parser.get_color("1024").should == :empty
+      parser.get_color(20.234).should == :yellow
+      parser.get_color("13.5").should == :green
+    end
+
+    it "should return a wind direction" do
+      parser = ForecastParser.new(test_options_image)
+      parser.extract_wind_direction("The wind seems North").should == "North"
+      parser.extract_wind_direction("Rain and a SSE wind.").should == "SSE"
+      parser.extract_wind_direction("I cannot feel the wind").should == "VAR"
     end
 
   end

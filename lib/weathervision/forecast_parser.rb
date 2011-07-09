@@ -1,4 +1,6 @@
-module Weathervision
+module Weathervision #:nodoc:
+  
+
   class ForecastParser
     attr_reader :text_icons, :image_icons, :forecast, :current, :conky_ouput, :radar
 
@@ -112,8 +114,8 @@ module Weathervision
     def parse_radar
       begin
         outfile = RADAR_PATH + "/radar_#{Time.now.to_i}_#{Time.now.strftime("%d%m%Y")}.gif"
-        %x(wget #{@params["radar_url"]} -O #{outfile})
-        %x(gifsicle --colors=255 #{outfile} > #{RADAR_PATH + '/temp.gif'})
+        %x(wget #{@params["radar_url"]} -O #{outfile} 2>&1 >/dev/null)
+        %x(gifsicle -w --colors=255 #{outfile} > #{RADAR_PATH + '/temp.gif'})
         %x(gifsicle -U #{RADAR_PATH + '/temp.gif'} "#-1" > #{RADAR_PATH + '/radar.gif'})
         # clear temp files and set actual radar image
         Dir.glob("#{RADAR_PATH}/*.gif") do |filename|
@@ -149,6 +151,14 @@ module Weathervision
       @current.merge!("wind_icon" => BEARING_PATH + "/" + @wind_icons[@current["winddir"]][color] + ".png")
     end
 
+    #Calculates the color to use as the arrow in the wind compass.
+    #The numbers represent km/h:
+    #
+    #* 0 means no wind
+    #* 1 till 19 means light/gentle breeze
+    #* 20 till 25 means moderate breeze
+    #* 26 till 39 means fresh breeze
+    #* 40 till 256 means strong wind, gale or even storms
     def get_color windspeed
       color = case windspeed.to_i
         when 0 then :empty 
@@ -192,8 +202,8 @@ module Weathervision
       @current['city'] = node.css('city').text
       @current['temp'] = node.css('temp_c').text
       @current['updated'] = node.css("observation_time_rfc822").text
-      @current['windspeed'] = ("%.1f" % (node.css('wind_mph').text.to_i * 1.605)).to_s
-      @current['winddir'] = node.css('wind_dir').text
+      @current['windspeed'] = extract_wind_speed(node.css('wind_mph').text + ' mph').to_s
+      @current['winddir'] = extract_wind_direction(node.css('wind_dir').text)
       @current['winddegrees'] = node.css('wind_degrees').text
       @current['humidity'] = node.css('relative_humidity').text
       # fetch sunset from forecast xml
@@ -201,19 +211,24 @@ module Weathervision
       @current['sunset'] = node.css('sunset hour').text + ':' + node.css('sunset minute').text
     end
 
+
+    #Extracts the speed (in km/h) of the wind from a text string using a regex.
+    #If an mph unit is found, it will be converted first.
     def extract_wind_speed(text)
       speed = 0
       if text.match(/(\d+)\s+(KPH|MPH)/i)
         speed, unit = $1, $2
         speed = speed.to_i * 1.605 if unit =~ /MPH/i
       end
-      speed.to_i
+      "%.1f" % speed
     end
 
+    #Extracts the wind direction from a text string using a regex.
+    #If none is found, it returns the default "VAR" (variable direction)
     def extract_wind_direction(text)
       direction = "VAR"
-      direction = $1 if text.match(/\s+(North|East|South|West)/i)
-      direction = $1 if text.match(/\s+(NNE|NE|ENE|ESE|SE|SSE|SSW|SW|WSW|WNW|NW|NNW)/)
+      direction = $1 if text.match(/\s*(North|East|South|West)/i)
+      direction = $1 if text.match(/\s*(NNE|NE|ENE|ESE|SE|SSE|SSW|SW|WSW|WNW|NW|NNW)/)
       direction
     end
 
