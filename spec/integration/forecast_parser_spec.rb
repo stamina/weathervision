@@ -68,5 +68,21 @@ module Weathervision
       Dir.glob("#{RADAR_PATH}/*.gif").size.should == 1
     end
 
+    it "should parse the forecast weather conditions" do
+      parser = ForecastParser.new(test_options_image)
+      parser.forecast_doc = mock(Nokogiri::XML).as_null_object
+      parser.parse_forecast
+    end
+
+    it "should parse the current weather conditions" do
+      parser = ForecastParser.new(test_options_image)
+      parser.current_doc = mock(Nokogiri::XML).as_null_object
+      parser.forecast_doc = mock(Nokogiri::XML).as_null_object
+      parser.should_receive(:extract_wind_speed)
+      parser.should_receive(:extract_wind_direction)
+      parser.parse_current
+      parser.current.keys.size.should == 8
+    end
+
   end
 end

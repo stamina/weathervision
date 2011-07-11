@@ -1,9 +1,12 @@
 module Weathervision #:nodoc:
-  
 
+  # The main weather parsing class
   class ForecastParser
     attr_reader :text_icons, :image_icons, :forecast, :current, :conky_ouput, :radar
+    attr_accessor :forecast_doc, :current_doc
 
+    # Constructor method: predefines the data hashes and sets the user's options coming in
+    # from Thor's cli api
     def initialize(options)
       @forecast, @current, @params, @radar = {}, {}, {}, nil
       @image_tpl = "#{TEMPLATE_PATH}/weathervision_image.erb"
@@ -89,11 +92,13 @@ module Weathervision #:nodoc:
       @params["radar_url"] = options["radar_url"]
     end
 
+    # Main processing function which starts the actual parsing and displaying
     def parse
-      parse_forecast && parse_current
+      parse_xml && parse_forecast && parse_current
       @params["mode"] == 'text' ? show_text_version : show_image_version
     end
 
+    # Final method which parser and outputs the image template
     def show_image_version
       calc_weather_icon(:image)
       calc_wind_icon
@@ -103,6 +108,7 @@ module Weathervision #:nodoc:
       puts @conky_ouput
     end
 
+    # Final method which parser and outputs the text template
     def show_text_version
       calc_weather_icon(:text)
       parse_radar unless @params["radar_url"].nil?
@@ -111,6 +117,7 @@ module Weathervision #:nodoc:
       puts @conky_ouput
     end
 
+    # Fetches the optional radar animated GIF and post processes it to show only the last frame.
     def parse_radar
       begin
         outfile = RADAR_PATH + "/radar_#{Time.now.to_i}_#{Time.now.strftime("%d%m%Y")}.gif"
@@ -130,6 +137,8 @@ module Weathervision #:nodoc:
       end
     end
 
+    # Fetches the right weather icon (an PNG image for the image version and a Font letter for the text version) and adds
+    # it to the hashes
     def calc_weather_icon(type)
       @forecast.keys.each do |period|
         if type == :image
@@ -140,6 +149,8 @@ module Weathervision #:nodoc:
       end
     end
 
+    # Fetches the right wind icon name based on the wind direction and wind speed and adds
+    # it to the hashes
     def calc_wind_icon
       @forecast.keys.each do |period|
         if @forecast[period].keys.include?("windspeed")
@@ -151,14 +162,14 @@ module Weathervision #:nodoc:
       @current.merge!("wind_icon" => BEARING_PATH + "/" + @wind_icons[@current["winddir"]][color] + ".png")
     end
 
-    #Calculates the color to use as the arrow in the wind compass.
-    #The numbers represent km/h:
-    #
-    #* 0 means no wind
-    #* 1 till 19 means light/gentle breeze
-    #* 20 till 25 means moderate breeze
-    #* 26 till 39 means fresh breeze
-    #* 40 till 256 means strong wind, gale or even storms
+    # Calculates the color to use as the arrow in the wind compass.
+    # The numbers represent km/h:
+    # 
+    # * 0 means no wind
+    # * 1 till 19 means light/gentle breeze
+    # * 20 till 25 means moderate breeze
+    # * 26 till 39 means fresh breeze
+    # * 40 till 256 means strong wind, gale or even storms
     def get_color windspeed
       color = case windspeed.to_i
         when 0 then :empty 
@@ -171,8 +182,9 @@ module Weathervision #:nodoc:
       end
     end
 
+    # Parses the forecast weather conditions xml feed and fills @forecast with data of the
+    # first 5 days (including the current one)
     def parse_forecast
-      @forecast_doc = Nokogiri::XML(open("http://api.wunderground.com/auto/wui/geo/ForecastXML/index.xml?query=#{@params["fc_query"]}"))
       set = @forecast_doc.css('simpleforecast forecastday')
       set.each do |node|
         hsh = {}
@@ -196,8 +208,8 @@ module Weathervision #:nodoc:
       end
     end
 
+    # Parses the current weather condition xml feed and fills @current with the data
     def parse_current
-      @current_doc = Nokogiri::XML(open("http://api.wunderground.com/weatherstation/WXCurrentObXML.asp?ID=#{@params["c_query"]}"))
       node = @current_doc.css('current_observation').first
       @current['city'] = node.css('city').text
       @current['temp'] = node.css('temp_c').text
@@ -211,9 +223,8 @@ module Weathervision #:nodoc:
       @current['sunset'] = node.css('sunset hour').text + ':' + node.css('sunset minute').text
     end
 
-
-    #Extracts the speed (in km/h) of the wind from a text string using a regex.
-    #If an mph unit is found, it will be converted first.
+    # Extracts the speed (in km/h) of the wind from a text string using a regex.
+    # If an mph unit is found, it will be converted first.
     def extract_wind_speed(text)
       speed = 0
       if text.match(/(\d+)\s+(KPH|MPH)/i)
@@ -223,13 +234,23 @@ module Weathervision #:nodoc:
       "%.1f" % speed
     end
 
-    #Extracts the wind direction from a text string using a regex.
-    #If none is found, it returns the default "VAR" (variable direction)
+    # Extracts the wind direction from a text string using a regex.
+    # If none is found, it returns the default "VAR" (variable direction)
     def extract_wind_direction(text)
       direction = "VAR"
       direction = $1 if text.match(/\s*(North|East|South|West)/i)
       direction = $1 if text.match(/\s*(NNE|NE|ENE|ESE|SE|SSE|SSW|SW|WSW|WNW|NW|NNW)/)
       direction
+    end
+
+    # Parses the actual xml feeds with Nokogiri and sets the instance variables
+    def parse_xml
+      begin
+        @forecast_doc = Nokogiri::XML(open("http://api.wunderground.com/auto/wui/geo/ForecastXML/index.xml?query=#{@params["fc_query"]}"))
+        @current_doc = Nokogiri::XML(open("http://api.wunderground.com/weatherstation/WXCurrentObXML.asp?ID=#{@params["c_query"]}"))
+      rescue Exception => e
+        STDERR.puts e.message
+      end
     end
 
   end

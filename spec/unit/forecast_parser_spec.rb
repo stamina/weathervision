@@ -68,5 +68,23 @@ module Weathervision
       parser.extract_wind_direction("I cannot feel the wind").should == "VAR"
     end
 
+    it "should merge the right wind icon name" do
+      parser = ForecastParser.new(test_options_image)  
+      parser.instance_eval { @forecast = { "0" => { "windspeed" => "1", "winddir" => "East" } } }
+      parser.instance_eval { @current = { "windspeed" => "30", "winddir" => "NW" } }
+      parser.calc_wind_icon
+      parser.current["wind_icon"].should =~ /51\.png/
+      parser.forecast["0"]["wind_icon"].should =~ /09\.png/
+    end
+
+    it "should merge the right weather icon name" do
+      parser = ForecastParser.new(test_options_image)  
+      parser.instance_eval { @forecast = { "0" => { "conditions" => "Fog" } } }
+      parser.calc_weather_icon(:image)
+      parser.forecast["0"]["weather_icon"].should =~ /20\.png/
+      parser.calc_weather_icon(:text)
+      parser.forecast["0"]["weather_icon"].should =~ /0/
+    end
+
   end
 end

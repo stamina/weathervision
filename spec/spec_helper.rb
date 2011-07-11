@@ -4,8 +4,8 @@ Bundler.require(:default, :development, :test)
 # requires supporting files with custom matchers and macros, etc, in ./support/ and its subdirectories.
 Dir["#{File.dirname(__FILE__)}/support/**/*.rb"].each {|f| require f}
 RSpec.configure do |config|
-  #suppress output to only show relevant test data
+  #suppress all output to only show relevant test data
   config.before(:all) do
-    $stdout = StringIO.new
+    #$stdout = StringIO.new
   end
 end
