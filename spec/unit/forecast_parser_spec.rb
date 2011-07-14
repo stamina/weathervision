@@ -15,6 +15,7 @@ module Weathervision
     it "should call the right image methods according the options hash" do
       parser = ForecastParser.new(test_options_image)
       parser.should_receive(:calc_weather_icon).with(:image).once
+      parser.should_not_receive(:calc_wind_arrow)
       parser.should_receive(:calc_wind_icon).once
       parser.parse
     end
@@ -23,6 +24,7 @@ module Weathervision
       parser = ForecastParser.new(test_options_text)
       parser.should_receive(:calc_weather_icon).with(:text).once
       parser.should_not_receive(:calc_wind_icon)
+      parser.should_receive(:calc_wind_arrow).once
       parser.parse
     end
 
@@ -75,6 +77,15 @@ module Weathervision
       parser.calc_wind_icon
       parser.current["wind_icon"].should =~ /51\.png/
       parser.forecast["0"]["wind_icon"].should =~ /09\.png/
+    end
+
+    it "should merge the right wind arrow letter" do
+      parser = ForecastParser.new(test_options_text)  
+      parser.instance_eval { @forecast = { "0" => { "windspeed" => "33", "winddir" => "WSW" } } }
+      parser.instance_eval { @current = { "windspeed" => "34", "winddir" => "NNW" } }
+      parser.calc_wind_arrow
+      parser.current["wind_icon"].should =~ /`/
+      parser.forecast["0"]["wind_icon"].should =~ /\\/
     end
 
     it "should merge the right weather icon name" do

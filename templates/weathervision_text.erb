@@ -1,1 +1,7 @@
-
+<% x_pos_text = 40 %>${font ConkyWindNESW:size=32}<% @forecast.each do |period, forecast| %>${goto <%= x_pos_text %>}<%= forecast["wind_icon"] %><% x_pos_text += 65 %><% end %>${font}
+<% x_pos_text = 40 %>${font ConkyWeather:size=32}<% @forecast.each do |period, forecast| %>${goto <%= x_pos_text %>}<%= forecast["weather_icon"] %><% x_pos_text += 65 %><% end %>${font}
+<% x_pos_text = 47 %>
+<% @forecast.each do |period, forecast| %>${goto <%= x_pos_text %>}<%= forecast["weekday"][0..2] %><% x_pos_text += 65 %><% end %>
+<% x_pos_text = 47 %>
+${voffset 15}<% @forecast.each do |period, forecast| %>${goto <%= x_pos_text %>}<%= forecast["high"] + '°/' + forecast["low"] + '°'%><% x_pos_text += 65 %><% end %>
+${voffset 25}${goto 300}${font ConkyWindNESW:size=36}<%= @current["wind_icon"] %>${font}${goto 200}${font Futura Md BT:size=12}<%= @current["city"] %>${voffset 20}${goto 200}<%= @current["temp"] + '°'%>${font}${voffset 15}${goto 200}<%= @current["humidity"] %>% humidity${voffset 15}${goto 200}<%= @current["windspeed"] %> km/h <%=  @current["winddir"]%> wind${voffset 15}${goto 200}<%= @current["sunset"] %> sunset<% unless @radar.nil? %>${image <%= @radar %> -s 100x100 -p 80,267}<% end %>

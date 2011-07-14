@@ -6,6 +6,6 @@ Dir["#{File.dirname(__FILE__)}/support/**/*.rb"].each {|f| require f}
 RSpec.configure do |config|
   #suppress all output to only show relevant test data
   config.before(:all) do
-    #$stdout = StringIO.new
+    $stdout = StringIO.new
   end
 end

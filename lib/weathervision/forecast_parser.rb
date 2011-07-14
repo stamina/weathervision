@@ -30,6 +30,25 @@ module Weathervision #:nodoc:
         "NW" => { empty: "00", green: "19", yellow: "35", orange: "51", red: "67" },
         "NNW" => { empty: "00", green: "20", yellow: "36", orange: "52", red: "68" }
       }
+      @wind_arrows = {
+        "VAR" => { empty: "%", green: "!", yellow: '"', orange: "#", red: "$" },
+        "North" => { empty: "%", green: "1", yellow: "A", orange: "Q", red: "a" },
+        "NNE" => { empty: "%", green: "2", yellow: "B", orange: "R", red: "b" },
+        "NE" => { empty: "%", green: "3", yellow: "C", orange: "S", red: "c" },
+        "ENE" => { empty: "%", green: "4", yellow: "D", orange: "T", red: "d" },
+        "East" => { empty: "%", green: "5", yellow: "E", orange: "U", red: "e" },
+        "ESE" => { empty: "%", green: "6", yellow: "F", orange: "V", red: "f" },
+        "SE" => { empty: "%", green: "7", yellow: "G", orange: "W", red: "g" },
+        "SSE" => { empty: "%", green: "8", yellow: "H", orange: "X", red: "h" },
+        "South" => { empty: "%", green: "9", yellow: "I", orange: "Y", red: "i" },
+        "SSW" => { empty: "%", green: ":", yellow: "J", orange: "Z", red: "j" },
+        "SW" => { empty: "%", green: ";", yellow: "K", orange: "[", red: "k" },
+        "WSW" => { empty: "%", green: "<", yellow: "L", orange: "\\", red: "l" },
+        "West" => { empty: "%", green: "=", yellow: "M", orange: "]", red: "m" },
+        "WNW" => { empty: "%", green: ">", yellow: "N", orange: "^", red: "n" },
+        "NW" => { empty: "%", green: "?", yellow: "O", orange: "_", red: "o" },
+        "NNW" => { empty: "%", green: "@", yellow: "P", orange: "`", red: "p" }
+      }
       @text_icons = {
         "Chance of Flurries" => "p",
         "Chance of Rain" => "h",
@@ -98,7 +117,7 @@ module Weathervision #:nodoc:
       @params["mode"] == 'text' ? show_text_version : show_image_version
     end
 
-    # Final method which parser and outputs the image template
+    # Final method which parses and outputs the image template
     def show_image_version
       calc_weather_icon(:image)
       calc_wind_icon
@@ -108,11 +127,12 @@ module Weathervision #:nodoc:
       puts @conky_ouput
     end
 
-    # Final method which parser and outputs the text template
+    # Final method which parses and outputs the text template
     def show_text_version
       calc_weather_icon(:text)
+      calc_wind_arrow
       parse_radar unless @params["radar_url"].nil?
-      erb = ERB.new(File.read(@text_tpl))
+      erb = ERB.new(File.read(@text_tpl), 0, '>')
       @conky_ouput = erb.result(binding)
       puts @conky_ouput
     end
@@ -160,6 +180,18 @@ module Weathervision #:nodoc:
       end
       color = get_color @current["windspeed"]
       @current.merge!("wind_icon" => BEARING_PATH + "/" + @wind_icons[@current["winddir"]][color] + ".png")
+    end
+
+    # Fetches the right wind arrow letter for the wind font based on the direction and adds it to the hashes
+    def calc_wind_arrow
+      @forecast.keys.each do |period|
+        if @forecast[period].keys.include?("windspeed")
+          color = get_color @forecast[period]["windspeed"]
+          @forecast[period].merge!("wind_icon" => @wind_arrows[@forecast[period]["winddir"]][color])
+        end
+      end
+      color = get_color @current["windspeed"]
+      @current.merge!("wind_icon" => @wind_arrows[@current["winddir"]][color])
     end
 
     # Calculates the color to use as the arrow in the wind compass.
@@ -227,7 +259,7 @@ module Weathervision #:nodoc:
     # If an mph unit is found, it will be converted first.
     def extract_wind_speed(text)
       speed = 0
-      if text.match(/(\d+)\s+(KPH|MPH)/i)
+      if text.match(/(\d+[.]*\d*)\s*(KPH|MPH)/i)
         speed, unit = $1, $2
         speed = speed.to_i * 1.605 if unit =~ /MPH/i
       end
