@@ -5,11 +5,11 @@ require "weathervision/version"
 Gem::Specification.new do |s|
   s.name        = "weathervision"
   s.version     = Weathervision::VERSION
-  s.authors     = ["stamina"]
+  s.authors     = ["Bas Brugman"]
   s.email       = ["bas.brugman@visionnaire.nl"]
-  s.homepage    = "http://"
-  s.summary     = %q{Write a gem summary}
-  s.description = %q{Write a gem description}
+  s.homepage    = "http://www.visionnaire.nl"
+  s.summary     = %q{Weather gem for conky}
+  s.description = %q{Weathervision is a weather forecast Ruby gem to be used with the light-weight system monitor Conky for X.}
 
   s.rubyforge_project = "weathervision"
 
