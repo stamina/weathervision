@@ -1,2 +1,6 @@
+25-07-2011
+==========
 
-First release
+Version 1.0.0
+-------------
+- First release

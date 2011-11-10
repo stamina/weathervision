@@ -99,8 +99,8 @@ module Weathervision #:nodoc:
         "Sleet" => "18",
         "Snow" => "16",
         "Sunny" => "32",
-        "Thunderstorms" => "3",
-        "Thunderstorm" => "3",
+        "Thunderstorms" => "03",
+        "Thunderstorm" => "03",
         "Unknown" => "25",
         "Overcast" => "26",
         "Scattered Clouds" => "30"
