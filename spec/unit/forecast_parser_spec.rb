@@ -94,8 +94,16 @@ module Weathervision
       parser.calc_weather_icon(:image)
       parser.forecast["0"]["weather_icon"].should =~ /20\.png/
       parser.calc_weather_icon(:text)
-      parser.forecast["0"]["weather_icon"].should =~ /0/
+      parser.forecast["0"]["weather_icon"].should == "0"
     end
 
+    it "should take a default icon when unknown weather conditions" do
+      parser = ForecastParser.new(test_options_image)  
+      parser.instance_eval { @forecast = { "0" => { "conditions" => "Change Rain" } } }
+      parser.calc_weather_icon(:image)
+      parser.forecast["0"]["weather_icon"].should =~ /25\.png/
+      parser.calc_weather_icon(:text)
+      parser.forecast["0"]["weather_icon"].should == "?" 
+    end
   end
 end

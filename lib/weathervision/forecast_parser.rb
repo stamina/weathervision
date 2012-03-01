@@ -162,9 +162,9 @@ module Weathervision #:nodoc:
     def calc_weather_icon(type)
       @forecast.keys.each do |period|
         if type == :image
-          @forecast[period].merge!("weather_icon" => WEATHER_PATH + "/" + @image_icons[@forecast[period]["conditions"]] + ".png")
+          @forecast[period].merge!("weather_icon" => WEATHER_PATH + "/" + (@image_icons[@forecast[period]["conditions"]] || @image_icons["Unknown"]) + ".png")
         elsif type == :text
-          @forecast[period].merge!("weather_icon" => @text_icons[@forecast[period]["conditions"]])
+          @forecast[period].merge!("weather_icon" => (@text_icons[@forecast[period]["conditions"]] || @text_icons["Unknown"]))
         end
       end
     end
@@ -175,11 +175,11 @@ module Weathervision #:nodoc:
       @forecast.keys.each do |period|
         if @forecast[period].keys.include?("windspeed")
           color = get_color @forecast[period]["windspeed"]
-          @forecast[period].merge!("wind_icon" => BEARING_PATH + "/" + @wind_icons[@forecast[period]["winddir"]][color] + ".png")
+          @forecast[period].merge!("wind_icon" => BEARING_PATH + "/" + (@wind_icons[@forecast[period]["winddir"]][color] || @wind_icons["VAR"][color])  + ".png")
         end
       end
       color = get_color @current["windspeed"]
-      @current.merge!("wind_icon" => BEARING_PATH + "/" + @wind_icons[@current["winddir"]][color] + ".png")
+      @current.merge!("wind_icon" => BEARING_PATH + "/" + (@wind_icons[@current["winddir"]][color] || @wind_icons["VAR"][color]) + ".png")
     end
 
     # Fetches the right wind arrow letter for the wind font based on the direction and adds it to the hashes
@@ -187,11 +187,11 @@ module Weathervision #:nodoc:
       @forecast.keys.each do |period|
         if @forecast[period].keys.include?("windspeed")
           color = get_color @forecast[period]["windspeed"]
-          @forecast[period].merge!("wind_icon" => @wind_arrows[@forecast[period]["winddir"]][color])
+          @forecast[period].merge!("wind_icon" => (@wind_arrows[@forecast[period]["winddir"]][color] || @wind_arrows["VAR"][color]))
         end
       end
       color = get_color @current["windspeed"]
-      @current.merge!("wind_icon" => @wind_arrows[@current["winddir"]][color])
+      @current.merge!("wind_icon" => (@wind_arrows[@current["winddir"]][color] || @wind_arrows["VAR"][color]))
     end
 
     # Calculates the color to use as the arrow in the wind compass.
