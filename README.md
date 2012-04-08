@@ -13,6 +13,8 @@ terms & conditions for commercial usage.
 Installation
 ------------
 
+Error: calc_wind_icon: 182 Nill class [] ........blablaal
+
 fonts... templates... execpi...
 
 images...
