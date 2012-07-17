@@ -4,11 +4,6 @@ require "open-uri"
 require "thor"
 require "erb"
 
-#debugging deps
-require "pry"
-require "ruby-debug"
-require "ruby-debug/pry"
-
 #internal deps
 require "weathervision/forecast_parser"
 require "weathervision/cli"
