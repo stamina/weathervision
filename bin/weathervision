@@ -1,5 +1,12 @@
 #!/usr/bin/env ruby
 require "weathervision"
 
-Weathervision::CLI.start
+begin
+  Weathervision::CLI.start
+rescue Exception => e
+  STDERR.puts "Error retrieving weather data: " + e.to_s
+  puts
+  print e.backtrace.join("\n") unless ENV["debug"].nil?
+end
+
 

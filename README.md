@@ -5,18 +5,38 @@ Author: Bas Brugman
 Company: [visionnaire](http://www.visionnaire.nl)
 
 Weathervision is a weather forecast Ruby Gem for the light-weight system monitor [Conky](http://conky.sourceforge.net).
-I've only tested it with conky version 1.8.1 on a Ubuntu 12.04 machine, but it should basically work with any modern Linux distro.
+I've tested it with Conky version 1.8.1 on a Ubuntu 12.04 machine, as well as Conky version 1.9 on Arch Linux.
+It should basically work with any modern Linux distro which has Ruby 1.9.3+ installed. 
 
-The weather data is extracted from [wunderground](http://www.wunderground.com/). It's free for personal usage. Please read Wunderground's
-terms & conditions for commercial usage.
+Weathervision is a commandline tool that spits out some Conky compatible configuration text containing weather information.
+
+There are 2 output modes available:
+
+1. image: renders the weathervision_image.erb template (using .png images located in assets/ to display conditions and wind directions)
+2. text: renders the weathervision_text.erb template (using 2 .otf fonts located in fonts/ to display conditions and wind directions)
+
+TODO: install those fonts???
+
+The weather data is extracted from [wunderground](http://www.wunderground.com/)'s JSON API. It's free for personal/developer usage.
 
 Installation
 ------------
 
-TODO: stupid oude debug eruit, nieuwe debugger gem erin... RSPECS nalopen met rspec 2.9
-debugging gem moet ook niet installen in "production" env
+1. Sign up for a free developer account at [wunderground](http://www.wunderground.com/) in order to get your API Key. You need this key
+   so weathervision can periodically poll for JSON weather data. The API key is an 8-byte hexadecimal string which needs to be embedded in
+   the JSON URL.
 
-The weather icons only look good with a dark background.
+   Run weathervision help parse for options...
+
+2. 
+
+There are 4 display modes:
+  image_v
+  image_h
+  text_v
+  text_h
+
+If you don't like the default look, feel free to hack away in those ERB templates.
 
 sudo apt-get install gifsicle
 gem install bundler
@@ -26,41 +46,14 @@ rake install (gem local install)
 
 fonts... templates... execpi...
 
-images...
 
-        %x(wget #{@params["radar_url"]} -O #{outfile} 2>&1 >/dev/null)
-        %x(gifsicle -w --colors=255 #{outfile} > #{RADAR_PATH + '/temp.gif'})
-        %x(gifsicle -U #{RADAR_PATH + '/temp.gif'} "#-1" > #{RADAR_PATH + '/radar.gif'})
-
-Error:
-
-[ ] Betere afvanging gevulde objecten bij ophalen data!!!!
-
-getaddrinfo: Name or service not known
-/home/stamina/.rvm/gems/ruby-1.9.3-p125@weathervision/gems/weathervision-1.0.0/lib/weathervision/forecast_parser.rb:182:in `calc_wind_icon': undefined method `[]' for nil:NilClass (NoMethodError)
-        from /home/stamina/.rvm/gems/ruby-1.9.3-p125@weathervision/gems/weathervision-1.0.0/lib/weathervision/forecast_parser.rb:123:in `show_image_version'
-        from /home/stamina/.rvm/gems/ruby-1.9.3-p125@weathervision/gems/weathervision-1.0.0/lib/weathervision/forecast_parser.rb:117:in `parse'
-        from /home/stamina/.rvm/gems/ruby-1.9.3-p125@weathervision/gems/weathervision-1.0.0/lib/weathervision/cli.rb:11:in `parse'
-
-/home/stamina/.rvm/gems/ruby-1.9.3-p125@weathervision/gems/weathervision-1.0.0/lib/weathervision/forecast_parser.rb:246:in `parse_current': undefined method `css' for nil:NilClass (NoMethodError)
-        from /home/stamina/.rvm/gems/ruby-1.9.3-p125@weathervision/gems/weathervision-1.0.0/lib/weathervision/forecast_parser.rb:116:in `parse'
-        from /home/stamina/.rvm/gems/ruby-1.9.3-p125@weathervision/gems/weathervision-1.0.0/lib/weathervision/cli.rb:11:in `parse'
-        from /home/stamina/.rvm/gems/ruby-1.9.3-p125@weathervision/gems/thor-0.14.6/lib/thor/task.rb:22:in `run'
-        from /home/stamina/.rvm/gems/ruby-1.9.3-p125@weathervision/gems/thor-0.14.6/lib/thor/invocation.rb:118:in `invoke_task'
-        from /home/stamina/.rvm/gems/ruby-1.9.3-p125@weathervision/gems/thor-0.14.6/lib/thor.rb:263:in `dispatch'
-        from /home/stamina/.rvm/gems/ruby-1.9.3-p125@weathervision/gems/thor-0.14.6/lib/thor/base.rb:389:in `start'
-        from /home/stamina/.rvm/gems/ruby-1.9.3-p125@weathervision/gems/weathervision-1.0.0/bin/weathervision:4:in `<top (required)>'
-        from /home/stamina/.rvm/gems/ruby-1.9.3-p125@weathervision/bin/weathervision:19:in `load'
-        from /home/stamina/.rvm/gems/ruby-1.9.3-p125@weathervision/bin/weathervision:19:in `<main>'
-
-Customization
--------------
 
 
 fonts... templates... execpi...
 
 TODO........
 text_buffer_size conky.......... 4096 make sure
+rdoc
 
 generate a wrapper script - namely, you need to set it up so that there is an alternative executable
 that loads the correct gemset.
@@ -71,4 +64,27 @@ gif tool...
 rvm wrapper 1.9.3@weathervision bootup weathervision
 ${execpi 900 /home/stamina/bin/bootup_weathervision parse}
 
+API Key:   033a9fdb3ff2b22f
 
+
+Current location conditions: http://api.wunderground.com/api/033a9fdb3ff2b22f/conditions/lang:EN/q/vlist.json
+10 Day forecast conditions: http://api.wunderground.com/api/033a9fdb3ff2b22f/forecast10day/lang:EN/q/vlist.json
+
+Satellite PNG image: http://api.wunderground.com/api/033a9fdb3ff2b22f/satellite/q/Netherlands/Utrecht.png?width=100&height=100
+
+Satellite PNG image: http://api.wunderground.com/api/033a9fdb3ff2b22f/radar/q/Netherlands/Amsterdam.gif?width=100&height=100&newmaps=1
+
+KS/Topeka
+
+http://api.wunderground.com/api/033a9fdb3ff2b22f/radar/q/Netherlands/Vlist.gif?width=280&height=280&newmaps=1
+
+http://api.wunderground.com/api/033a9fdb3ff2b22f/satellite/image.gif?maxlat=52&maxlon=4&minlat=51&minlon=5&width=600&height=480&newmaps=1
+
+Satellite PNG image: http://api.wunderground.com/api/033a9fdb3ff2b22f/radar/image.png?
+
+resp = HTTParty.get("http://api.wunderground.com/api/033a9fdb3ff2b22f/conditions/lang:EN/q/vlist.json"))
+
+   data = resp.body
+
+Note that I'm using English as the weather conditions texts (lang:EN in the queries). If you really want to use a different language
+you have to change the strings in the compare-arrays in forecast_parser.rb. These arrays are mapping the texts to the correct images.

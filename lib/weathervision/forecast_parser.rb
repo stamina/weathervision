@@ -3,14 +3,16 @@ module Weathervision #:nodoc:
   # The main weather parsing class
   class ForecastParser
     attr_reader :text_icons, :image_icons, :forecast, :current, :conky_ouput, :radar
-    attr_accessor :forecast_doc, :current_doc
+    attr_accessor :forecast_json, :current_json, :astronomy_json
 
     # Constructor method: predefines the data hashes and sets the user's options coming in
     # from Thor's cli api
     def initialize(options)
-      @forecast, @current, @params, @radar = {}, {}, {}, nil
-      @image_tpl = "#{TEMPLATE_PATH}/weathervision_image.erb"
-      @text_tpl = "#{TEMPLATE_PATH}/weathervision_text.erb"
+      @forecast, @current, @radar, @options = {}, {}, nil, options
+      @himage_tpl = "#{TEMPLATE_PATH}/weathervision_himage.erb"
+      @vimage_tpl = "#{TEMPLATE_PATH}/weathervision_vimage.erb"
+      @htext_tpl = "#{TEMPLATE_PATH}/weathervision_htext.erb"
+      @vtext_tpl = "#{TEMPLATE_PATH}/weathervision_vtext.erb"
       @wind_icons = {
         "VAR" => { empty: "00", green: "01", yellow: "02", orange: "03", red: "04" },
         "North" => { empty: "00", green: "05", yellow: "21", orange: "37", red: "53" },
@@ -105,55 +107,61 @@ module Weathervision #:nodoc:
         "Overcast" => "26",
         "Scattered Clouds" => "30"
       }
-      @params["mode"] = options["mode"]
-      @params["fc_query"] = options["fc_query"]
-      @params["c_query"] = options["c_query"]
-      @params["radar_url"] = options["radar_url"]
     end
 
     # Main processing function which starts the actual parsing and displaying
     def parse
-      parse_xml && parse_forecast && parse_current
-      @params["mode"] == 'text' ? show_text_version : show_image_version
+      parse_json && parse_forecast && parse_current
+      (@options["mode"] =~ /text/).nil? ? show_image_version : show_text_version
     end
 
     # Final method which parses and outputs the image template
     def show_image_version
+      if @options["mode"] == "himage"
+        tpl = @himage_tpl
+      elsif @options["mode"] == "vimage"
+        tpl = @vimage_tpl
+      else 
+        raise "invalid template name" + @options["mode"]
+      end
       calc_weather_icon(:image)
       calc_wind_icon
-      parse_radar unless @params["radar_url"].nil?
-      erb = ERB.new(File.read(@image_tpl), 0, '>')
+      parse_radar unless @options["radar_location"].nil?
+      erb = ERB.new(File.read(tpl), 0, '>')
       @conky_ouput = erb.result(binding)
       puts @conky_ouput
     end
 
     # Final method which parses and outputs the text template
     def show_text_version
+      if @options["mode"] == "htext"
+        tpl = @htext_tpl
+      elsif @options["mode"] == "vtext"
+        tpl = @vtext_tpl
+      else 
+        raise "invalid template name" + @options["mode"]
+      end
       calc_weather_icon(:text)
       calc_wind_arrow
-      parse_radar unless @params["radar_url"].nil?
-      erb = ERB.new(File.read(@text_tpl), 0, '>')
+      parse_radar unless @options["radar_location"].nil?
+      erb = ERB.new(File.read(tpl), 0, '>')
       @conky_ouput = erb.result(binding)
       puts @conky_ouput
     end
 
-    # Fetches the optional radar animated GIF and post processes it to show only the last frame.
+    # Fetches the optional radar animated GIF
+    # Imagemagick's convert tool is used to make it a cropped single image
     def parse_radar
-      begin
-        outfile = RADAR_PATH + "/radar_#{Time.now.to_i}_#{Time.now.strftime("%d%m%Y")}.gif"
-        %x(wget #{@params["radar_url"]} -O #{outfile} 2>&1 >/dev/null)
-        %x(gifsicle -w --colors=255 #{outfile} > #{RADAR_PATH + '/temp.gif'})
-        %x(gifsicle -U #{RADAR_PATH + '/temp.gif'} "#-1" > #{RADAR_PATH + '/radar.gif'})
-        # clear temp files and set actual radar image
-        Dir.glob("#{RADAR_PATH}/*.gif") do |filename|
-          if filename =~ /radar\.gif/
-            @radar = filename
-          else
-            File.delete(filename)
-          end
+      outfile = RADAR_PATH + "/radar_#{Time.now.to_i}_#{Time.now.strftime("%d%m%Y")}.gif"
+      %x(wget #{@options["radar_location"]} -O #{outfile} 2>&1 >/dev/null)
+      %x(convert #{outfile} -flatten -repage '0x0' -crop '259x357+89+0' +repage #{RADAR_PATH + '/radar.gif'})
+      # clear temp files and assign latest radar image
+      Dir.glob("#{RADAR_PATH}/*.gif") do |filename|
+        if filename =~ /radar\.gif/
+          @radar = filename
+        else
+          File.delete(filename)
         end
-      rescue Exception => e
-        STDERR.puts e.message
       end
     end
 
@@ -214,75 +222,40 @@ module Weathervision #:nodoc:
       end
     end
 
-    # Parses the forecast weather conditions xml feed and fills @forecast with data of the
-    # first 5 days (including the current one)
+    # Parses the forecast weather conditions json feed and fills @forecast with 
+    # the upcoming weather conditions (including today)
     def parse_forecast
-      set = @forecast_doc.css('simpleforecast forecastday')
-      set.each do |node|
+      @forecast_json["forecast"]["simpleforecast"]["forecastday"].each do |day|
         hsh = {}
-        hsh['weekday'] = node.css("weekday").text
-        hsh['high'] = node.css('high celsius').text
-        hsh['low'] = node.css('low celsius').text
-        hsh['conditions'] = node.css('conditions').text
-        @forecast[node.css('period').text] = hsh
-      end
-      set = @forecast_doc.css('txt_forecast')
-      @forecast.keys.each do |period|
-        forecast_text = set.xpath("//forecastday[period=#{period}]/fcttext").first
-        if !forecast_text.nil?
-          @forecast[period].merge!({ "text" => forecast_text.text}) 
-          @forecast[period].merge!({ "windspeed" => extract_wind_speed(forecast_text.text)})
-          @forecast[period].merge!({ "winddir" => extract_wind_direction(forecast_text.text)})
-        else
-          # remove forecast period which doesnt have wind info
-          @forecast.delete(period)
-        end
+        hsh['weekday'] = day["date"]["weekday_short"]
+        hsh['high'] = day["high"]["celsius"]
+        hsh['low'] = day["low"]["celsius"]
+        hsh['conditions'] = day["conditions"]
+        hsh['windspeed'] = day["maxwind"]["kph"]
+        hsh['winddir'] = day["maxwind"]["dir"]
+        @forecast[day["period"]] = hsh # periods 1 to 10
       end
     end
 
-    # Parses the current weather condition xml feed and fills @current with the data
+    # Parses the current weather condition json feed and fills @current with the data
     def parse_current
-      node = @current_doc.css('current_observation').first
-      @current['city'] = node.css('city').text
-      @current['temp'] = node.css('temp_c').text
-      @current['updated'] = node.css("observation_time_rfc822").text
-      @current['windspeed'] = extract_wind_speed(node.css('wind_mph').text + ' mph').to_s
-      @current['winddir'] = extract_wind_direction(node.css('wind_dir').text)
-      @current['winddegrees'] = node.css('wind_degrees').text
-      @current['humidity'] = node.css('relative_humidity').text
-      # fetch sunset from forecast xml
-      node = @forecast_doc.css('moon_phase').first
-      @current['sunset'] = node.css('sunset hour').text + ':' + node.css('sunset minute').text
+      attr = @current_json['current_observation']
+      @current['city'] = attr['observation_location']['city']
+      @current['temp'] = attr['temp_c'].to_s
+      @current['windspeed'] = attr['wind_kph']
+      @current['winddir'] = attr['wind_dir']
+      @current['winddegrees'] = attr['wind_degrees']
+      @current['humidity'] = attr['relative_humidity']
+      moon = @astronomy_json['moon_phase']
+      @current['sunrise'] = moon['sunrise']['hour'] +  ':' + moon['sunrise']['minute']
+      @current['sunset'] = moon['sunset']['hour'] +  ':' + moon['sunset']['minute']
     end
 
-    # Extracts the speed (in km/h) of the wind from a text string using a regex.
-    # If an mph unit is found, it will be converted first.
-    def extract_wind_speed(text)
-      speed = 0
-      if text.match(/(\d+[.]*\d*)\s*(KPH|MPH)/i)
-        speed, unit = $1, $2
-        speed = speed.to_i * 1.605 if unit =~ /MPH/i
-      end
-      "%.1f" % speed
-    end
-
-    # Extracts the wind direction from a text string using a regex.
-    # If none is found, it returns the default "VAR" (variable direction)
-    def extract_wind_direction(text)
-      direction = "VAR"
-      direction = $1 if text.match(/\s*(North|East|South|West)/i)
-      direction = $1 if text.match(/\s*(NNE|NE|ENE|ESE|SE|SSE|SSW|SW|WSW|WNW|NW|NNW)/)
-      direction
-    end
-
-    # Parses the actual xml feeds with Nokogiri and sets the instance variables
-    def parse_xml
-      begin
-        @forecast_doc = Nokogiri::XML(open("http://api.wunderground.com/auto/wui/geo/ForecastXML/index.xml?query=#{@params["fc_query"]}"))
-        @current_doc = Nokogiri::XML(open("http://api.wunderground.com/weatherstation/WXCurrentObXML.asp?ID=#{@params["c_query"]}"))
-      rescue Exception => e
-        STDERR.puts e.message
-      end
+    # Parses the actual json data and sets the instance variables
+    def parse_json
+      @current_json = HTTParty.get("http://api.wunderground.com/api/#{@options['apikey']}/conditions/lang:EN/q/#{@options['current_location']}.json")
+      @astronomy_json = HTTParty.get("http://api.wunderground.com/api/#{@options['apikey']}/astronomy/lang:EN/q/#{@options['current_location']}.json")
+      @forecast_json = HTTParty.get("http://api.wunderground.com/api/#{@options['apikey']}/forecast10day/lang:EN/q/#{@options['forecast_location']}.json")
     end
 
   end
