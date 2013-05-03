@@ -26,7 +26,7 @@ Installation
    so weathervision can periodically poll for JSON weather data. The API key is an 8-byte hexadecimal string which needs to be embedded in
    the JSON URL.
 
-   Run weathervision help parse for options...
+   Run weathervision help parse for options... radar_location= empty laten!!
 
 2. 
 
@@ -67,24 +67,6 @@ ${execpi 900 /home/stamina/bin/bootup_weathervision parse}
 API Key:   033a9fdb3ff2b22f
 
 
-Current location conditions: http://api.wunderground.com/api/033a9fdb3ff2b22f/conditions/lang:EN/q/vlist.json
-10 Day forecast conditions: http://api.wunderground.com/api/033a9fdb3ff2b22f/forecast10day/lang:EN/q/vlist.json
 
-Satellite PNG image: http://api.wunderground.com/api/033a9fdb3ff2b22f/satellite/q/Netherlands/Utrecht.png?width=100&height=100
-
-Satellite PNG image: http://api.wunderground.com/api/033a9fdb3ff2b22f/radar/q/Netherlands/Amsterdam.gif?width=100&height=100&newmaps=1
-
-KS/Topeka
-
-http://api.wunderground.com/api/033a9fdb3ff2b22f/radar/q/Netherlands/Vlist.gif?width=280&height=280&newmaps=1
-
-http://api.wunderground.com/api/033a9fdb3ff2b22f/satellite/image.gif?maxlat=52&maxlon=4&minlat=51&minlon=5&width=600&height=480&newmaps=1
-
-Satellite PNG image: http://api.wunderground.com/api/033a9fdb3ff2b22f/radar/image.png?
-
-resp = HTTParty.get("http://api.wunderground.com/api/033a9fdb3ff2b22f/conditions/lang:EN/q/vlist.json"))
-
-   data = resp.body
-
-Note that I'm using English as the weather conditions texts (lang:EN in the queries). If you really want to use a different language
-you have to change the strings in the compare-arrays in forecast_parser.rb. These arrays are mapping the texts to the correct images.
+Note that I'm using English as the weather conditions texts (lang:EN in the JSON urls). If you really want to use a different language
+you have to change the key strings in the compare hashes in forecast_parser.rb. These key strings are mapping wind directions to the correct images, e.g. North-North-East NNE.

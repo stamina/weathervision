@@ -10,7 +10,7 @@ Gem::Specification.new do |s|
   s.email       = ["bas.brugman@visionnaire.nl"]
   s.homepage    = "http://www.visionnaire.nl"
   s.summary     = %q{Weather gem for conky}
-  s.description = %q{Weathervision is a weather forecast Ruby gem to be used with the light-weight system monitor Conky for X.}
+  s.description = %q{Weathervision is a weather forecast Ruby gem to be used with the light-weight system monitor Conky.}
   s.licenses    = ['MIT']
 
   s.rubyforge_project = "weathervision"

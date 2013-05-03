@@ -2,7 +2,7 @@ module Weathervision #:nodoc:
 
   # The main weather parsing class
   class ForecastParser
-    attr_reader :text_icons, :image_icons, :forecast, :current, :conky_ouput, :radar
+    attr_reader :wind_icons, :image_icons, :forecast, :current, :conky_output, :radar
     attr_accessor :forecast_json, :current_json, :astronomy_json
 
     # Constructor method: predefines the data hashes and sets the user's options coming in
@@ -11,8 +11,6 @@ module Weathervision #:nodoc:
       @forecast, @current, @radar, @options = {}, {}, nil, options
       @himage_tpl = "#{TEMPLATE_PATH}/weathervision_himage.erb"
       @vimage_tpl = "#{TEMPLATE_PATH}/weathervision_vimage.erb"
-      @htext_tpl = "#{TEMPLATE_PATH}/weathervision_htext.erb"
-      @vtext_tpl = "#{TEMPLATE_PATH}/weathervision_vtext.erb"
       @wind_icons = {
         "VAR" => { empty: "00", green: "01", yellow: "02", orange: "03", red: "04" },
         "North" => { empty: "00", green: "05", yellow: "21", orange: "37", red: "53" },
@@ -31,53 +29,6 @@ module Weathervision #:nodoc:
         "WNW" => { empty: "00", green: "18", yellow: "34", orange: "50", red: "66" },
         "NW" => { empty: "00", green: "19", yellow: "35", orange: "51", red: "67" },
         "NNW" => { empty: "00", green: "20", yellow: "36", orange: "52", red: "68" }
-      }
-      @wind_arrows = {
-        "VAR" => { empty: "%", green: "!", yellow: '"', orange: "#", red: "$" },
-        "North" => { empty: "%", green: "1", yellow: "A", orange: "Q", red: "a" },
-        "NNE" => { empty: "%", green: "2", yellow: "B", orange: "R", red: "b" },
-        "NE" => { empty: "%", green: "3", yellow: "C", orange: "S", red: "c" },
-        "ENE" => { empty: "%", green: "4", yellow: "D", orange: "T", red: "d" },
-        "East" => { empty: "%", green: "5", yellow: "E", orange: "U", red: "e" },
-        "ESE" => { empty: "%", green: "6", yellow: "F", orange: "V", red: "f" },
-        "SE" => { empty: "%", green: "7", yellow: "G", orange: "W", red: "g" },
-        "SSE" => { empty: "%", green: "8", yellow: "H", orange: "X", red: "h" },
-        "South" => { empty: "%", green: "9", yellow: "I", orange: "Y", red: "i" },
-        "SSW" => { empty: "%", green: ":", yellow: "J", orange: "Z", red: "j" },
-        "SW" => { empty: "%", green: ";", yellow: "K", orange: "[", red: "k" },
-        "WSW" => { empty: "%", green: "<", yellow: "L", orange: "\\", red: "l" },
-        "West" => { empty: "%", green: "=", yellow: "M", orange: "]", red: "m" },
-        "WNW" => { empty: "%", green: ">", yellow: "N", orange: "^", red: "n" },
-        "NW" => { empty: "%", green: "?", yellow: "O", orange: "_", red: "o" },
-        "NNW" => { empty: "%", green: "@", yellow: "P", orange: "`", red: "p" }
-      }
-      @text_icons = {
-        "Chance of Flurries" => "p",
-        "Chance of Rain" => "h",
-        "Chance of Freezing Rain" => "t",
-        "Chance of Sleet" => "x",
-        "Chance of Snow" => "p",
-        "Chance of Thunderstorms" => "n",
-        "Chance of a Thunderstorm" => "m",
-        "Clear" => "a",
-        "Cloudy" => "f",
-        "Flurries" => "p",
-        "Fog" => "0",
-        "Haze" => "9",
-        "Mostly Cloudy" => "d",
-        "Mostly Sunny" => "b",
-        "Partly Cloudy" => "c",
-        "Partly Sunny" => "c",
-        "Freezing Rain" => "v",
-        "Rain" => "i",
-        "Sleet" => "w",
-        "Snow" => "q",
-        "Sunny" => "a",
-        "Thunderstorms" => "n",
-        "Thunderstorm" => "m",
-        "Unknown" => "?",
-        "Overcast" => "e",
-        "Scattered Clouds" => "d"
       }
       @image_icons = {
         "Chance of Flurries" => "13",
@@ -111,8 +62,7 @@ module Weathervision #:nodoc:
 
     # Main processing function which starts the actual parsing and displaying
     def parse
-      parse_json && parse_forecast && parse_current
-      (@options["mode"] =~ /text/).nil? ? show_image_version : show_text_version
+      parse_json && parse_forecast && parse_current && show_image_version
     end
 
     # Final method which parses and outputs the image template
@@ -124,29 +74,12 @@ module Weathervision #:nodoc:
       else 
         raise "invalid template name" + @options["mode"]
       end
-      calc_weather_icon(:image)
+      calc_weather_icon
       calc_wind_icon
-      parse_radar unless @options["radar_location"].nil?
+      parse_radar unless @options["radar_location"].empty?
       erb = ERB.new(File.read(tpl), 0, '>')
-      @conky_ouput = erb.result(binding)
-      puts @conky_ouput
-    end
-
-    # Final method which parses and outputs the text template
-    def show_text_version
-      if @options["mode"] == "htext"
-        tpl = @htext_tpl
-      elsif @options["mode"] == "vtext"
-        tpl = @vtext_tpl
-      else 
-        raise "invalid template name" + @options["mode"]
-      end
-      calc_weather_icon(:text)
-      calc_wind_arrow
-      parse_radar unless @options["radar_location"].nil?
-      erb = ERB.new(File.read(tpl), 0, '>')
-      @conky_ouput = erb.result(binding)
-      puts @conky_ouput
+      @conky_output = erb.result(binding)
+      puts @conky_output
     end
 
     # Fetches the optional radar animated GIF
@@ -165,15 +98,10 @@ module Weathervision #:nodoc:
       end
     end
 
-    # Fetches the right weather icon (an PNG image for the image version and a Font letter for the text version) and adds
-    # it to the hashes
-    def calc_weather_icon(type)
+    # Fetches the right weather icon (a PNG image)
+    def calc_weather_icon
       @forecast.keys.each do |period|
-        if type == :image
-          @forecast[period].merge!("weather_icon" => WEATHER_PATH + "/" + (@image_icons[@forecast[period]["conditions"]] || @image_icons["Unknown"]) + ".png")
-        elsif type == :text
-          @forecast[period].merge!("weather_icon" => (@text_icons[@forecast[period]["conditions"]] || @text_icons["Unknown"]))
-        end
+        @forecast[period].merge!("weather_icon" => WEATHER_PATH + "/" + (@image_icons[@forecast[period]["conditions"]] || @image_icons["Unknown"]) + ".png")
       end
     end
 
@@ -188,18 +116,6 @@ module Weathervision #:nodoc:
       end
       color = get_color @current["windspeed"]
       @current.merge!("wind_icon" => BEARING_PATH + "/" + (@wind_icons[@current["winddir"]][color] || @wind_icons["VAR"][color]) + ".png")
-    end
-
-    # Fetches the right wind arrow letter for the wind font based on the direction and adds it to the hashes
-    def calc_wind_arrow
-      @forecast.keys.each do |period|
-        if @forecast[period].keys.include?("windspeed")
-          color = get_color @forecast[period]["windspeed"]
-          @forecast[period].merge!("wind_icon" => (@wind_arrows[@forecast[period]["winddir"]][color] || @wind_arrows["VAR"][color]))
-        end
-      end
-      color = get_color @current["windspeed"]
-      @current.merge!("wind_icon" => (@wind_arrows[@current["winddir"]][color] || @wind_arrows["VAR"][color]))
     end
 
     # Calculates the color to use as the arrow in the wind compass.

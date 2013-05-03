@@ -1,11 +1,11 @@
 <% x_pos_wth, x_pos_wind = 20, 50 %>
-<% @forecast.each do |period, forecast| %>
-${image <%= forecast["weather_icon"] %> -s 60x60 -p <%= x_pos_wth %>,115  }<% if forecast.include? "wind_icon" %>${image <%= forecast["wind_icon"] %> -s 30x30 -p <%= x_pos_wind %>,110  }<% end %>
+<% @forecast.take(5).each do |period, forecast| %>
+${image <%= forecast["weather_icon"] %> -s 60x60 -p <%= x_pos_wth %>,26  }<% if forecast.include? "wind_icon" %>${image <%= forecast["wind_icon"] %> -s 30x30 -p <%= x_pos_wind %>,31  }<% end %>
 <% x_pos_wth += 65 %>
 <% x_pos_wind += 65 %>
 <% end %>
 <% x_pos_text = 47 %>
-${voffset 45}<% @forecast.each do |period, forecast| %>${goto <%= x_pos_text %>}<%= forecast["weekday"][0..2] %><% x_pos_text += 65 %><% end %>
+<% @forecast.take(5).each do |period, forecast| %>${goto <%= x_pos_text %>}<%= forecast["weekday"] %><% x_pos_text += 65 %><% end %>
 <% x_pos_text = 47 %>
-${voffset 15}<% @forecast.each do |period, forecast| %>${goto <%= x_pos_text %>}<%= forecast["high"] + '°/' + forecast["low"] + '°'%><% x_pos_text += 65 %><% end %>
-${image <%= @current["wind_icon"] %> -s 40x40 -p 260,215}${voffset 30}${goto 200}${font Futura Md BT:size=12}<%= @current["city"] %>${voffset 20}${goto 200}<%= @current["temp"] + '°'%>${font}${voffset 15}${goto 200}<%= @current["humidity"] %>% humidity${voffset 15}${goto 200}<%= @current["windspeed"] %> km/h <%=  @current["winddir"]%> wind${voffset 15}${goto 200}<%= @current["sunrise"] %> sunrise<%= @current["sunset"] %> sunset<% unless @sat.nil? %>${image <%= @sat %> -s 100x100 -p 80,215}<% end %>
+${voffset 15}<% @forecast.take(5).each do |period, forecast| %>${goto <%= x_pos_text %>}<%= forecast["high"] + '°/' + forecast["low"] + '°'%><% x_pos_text += 65 %><% end %>
+${image <%= @current["wind_icon"] %> -s 40x40 -p 230,90}${font size=12}${voffset 65}${goto 160}<%= @current["city"] %>${voffset 18}${goto 160}<%= @current["temp"] + '°'%>${font}${voffset 15}${goto 160}<%= @current["humidity"] %> humidity${voffset 15}${goto 160}<%= @current["windspeed"] %> km/h <%=  @current["winddir"]%> wind${voffset 15}${goto 160}<%= @current["sunrise"] %> sunrise${voffset 15}${goto 160}<%= @current["sunset"] %> sunset<% unless @radar.nil? %>${image <%= @radar %> -s 130x179 -p 20,80}${voffset 100}<% end %>
