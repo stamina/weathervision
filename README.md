@@ -8,6 +8,8 @@ Weathervision is a weather forecast Ruby Gem for the light-weight system monitor
 I've tested it with Conky version 1.8.1 on a Ubuntu 12.04 machine, as well as Conky version 1.9 on Arch Linux.
 It should basically work with any modern Linux distro which has Ruby 1.9.3+ installed. 
 
+![Vertical Layout](https://github.com/stamina/easyrider/raw/master/assets/screenshots/vertical_layout.png "Vertical Layout")
+
 Weathervision is a commandline tool that spits out some Conky compatible template text containing weather information.
 
 There are 2 output modes available:
